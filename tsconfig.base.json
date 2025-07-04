@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["DOM", "ES2020"],
+    "jsx": "preserve",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@web/*": ["apps/web/src/*"],
+      "@api/*": ["apps/api/src/*"],
+      "@staff/*": ["apps/staff/src/*"],
+      "@ui/*": ["packages/ui/src/*"],
+      "@config/*": ["packages/config/src/*"],
+      "@db/*": ["packages/db/dist/*"],
+      "@email/*": ["packages/email/dist/src/*"],
+      "db": ["packages/db/dist/src"],
+      "email": ["packages/email/dist/src"]
+    }
+  }
+}

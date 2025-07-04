@@ -1,0 +1,85 @@
+# General development artifacts
+**/.env
+**/.env.local
+**/.env.*.local
+**/.vscode/
+**/.idea/
+**/.DS_Store
+**/.tern-project
+**/.cache/
+**/.pnp
+**/.pnp.js
+**/*.log*
+**/logs
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/lerna-debug.log*
+
+# Dependency directories
+**/node_modules/
+
+# Build directories
+**/dist/
+**/build/
+**/out/
+**/coverage/
+**/.next/
+**/.turbo/
+**/.vercel/
+
+# Testing artifacts
+**/__snapshots__/
+**/.jest/
+**/jest.config.js
+**/cypress/screenshots/
+**/cypress/videos/
+
+# Prisma artifacts
+**/prisma/migrations/
+**/prisma/*.dev.db
+**/prisma/*.test.db
+
+# Package manager specific
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+**/pnpm-workspace.yaml
+**/shrinkwrap.json
+
+# TypeScript artifacts
+**/*.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# Editor/IDE
+**/.vs/
+**/.history/
+**/*.suo
+**/*.ntvs*
+**/*.njsproj
+**/*.sln
+**/*.sw?
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db

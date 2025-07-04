@@ -1,0 +1,32 @@
+{
+  "name": "db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "postbuild": "node scripts/copy-generated.js",
+    "build": "tsc -b && node scripts/copy-generated.js",
+    "dev": "tsc -b --watch",
+    "seed": "ts-node prisma/seed.ts",
+    "prisma:generate": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.4",
+  "devDependencies": {
+    "@nestjs/common": "^10.3.10",
+    "@prisma/client": "^6.11.1",
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^6.0.0",
+    "jest-mock-extended": "^4.0.0",
+    "prisma": "^6.11.1",
+    "reflect-metadata": "^0.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

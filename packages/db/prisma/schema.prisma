@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────────
+// ENUMS
+// ──────────────────────────────────────────────────────────────
+
+enum UserType {
+  SUPER_ADMIN
+  PLATFORM_ADMIN
+  REGULAR
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+  BILLING_MANAGER
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  PAST_DUE
+  TRIALING
+}
+
+// ──────────────────────────────────────────────────────────────
+// USER
+// ──────────────────────────────────────────────────────────────
+
+model User {
+  id                               String    @id @default(uuid())
+  email                            String    @unique
+  password                         String? // Optional if using social login
+  name                             String?
+  emailVerified                    Boolean   @default(false)
+  createdAt                        DateTime  @default(now())
+  updatedAt                        DateTime  @updatedAt
+  deletedAt                        DateTime?
+  userType                         UserType  @default(REGULAR)
+  isTwoFactorAuthenticationEnabled Boolean   @default(false)
+  twoFactorAuthenticationSecret    String?
+  metadata                         Json?
+
+  // Relations
+  memberships             OrganizationMembership[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  profile                 Profile?
+
+  createdOrganizations Organization[] @relation("CreatedOrganizations")
+  createdInvitations   Invitation[]   @relation("CreatedInvitations")
+
+  @@index([email])
+}
+
+// ──────────────────────────────────────────────────────────────
+// ORGANIZATION
+// ──────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  metadata  Json?
+
+  // Relations
+  members     OrganizationMembership[]
+  invitations Invitation[]
+  customer    Customer?
+  createdById String?
+  createdBy   User?                    @relation("CreatedOrganizations", fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+// ──────────────────────────────────────────────────────────────
+// ORGANIZATION MEMBERSHIP (REL MANY-TO-MANY + ROLES)
+// ──────────────────────────────────────────────────────────────
+
+model OrganizationMembership {
+  userId         String
+  organizationId String
+  role           OrganizationRole
+  createdAt      DateTime         @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+}
+
+// ──────────────────────────────────────────────────────────────
+// INVITATION
+// ──────────────────────────────────────────────────────────────
+
+model Invitation {
+  id        String   @id @default(uuid())
+  email     String
+  role      OrganizationRole @default(MEMBER)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  metadata  Json?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation("CreatedInvitations", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, email])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// ──────────────────────────────────────────────────────────────
+// PROFILE
+// ──────────────────────────────────────────────────────────────
+
+model Profile {
+  id        String  @id @default(uuid())
+  bio       String?
+  avatarUrl String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ──────────────────────────────────────────────────────────────
+// PASSWORD RESET TOKEN
+// ──────────────────────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, token])
+}
+
+// ──────────────────────────────────────────────────────────────
+// EMAIL VERIFICATION TOKEN
+// ──────────────────────────────────────────────────────────────
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, token])
+}
+
+// ──────────────────────────────────────────────────────────────
+// BILLING: CUSTOMER & SUBSCRIPTION
+// ──────────────────────────────────────────────────────────────
+
+model Customer {
+  id        String @id // Stripe Customer ID (cus_...)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  subscription Subscription?
+}
+
+model Subscription {
+  id                 String             @id // Stripe Subscription ID (sub_...)
+  status             SubscriptionStatus
+  plan               SubscriptionPlan
+  priceId            String?
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialStart         DateTime?
+  trialEnd           DateTime?
+  cancelAtPeriodEnd  Boolean            @default(false)
+  canceledAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
