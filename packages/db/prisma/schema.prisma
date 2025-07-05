@@ -39,6 +39,11 @@ enum SubscriptionStatus {
   TRIALING
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 // ──────────────────────────────────────────────────────────────
 // USER
 // ──────────────────────────────────────────────────────────────
@@ -56,6 +61,9 @@ model User {
   isTwoFactorAuthenticationEnabled Boolean   @default(false)
   twoFactorAuthenticationSecret    String?
   metadata                         Json?
+  roles                            Role[]    @default([USER])
+  isTwoFactorEnabled               Boolean   @default(false)
+  twoFactorSecret                  String?
 
   // Relations
   memberships             OrganizationMembership[]

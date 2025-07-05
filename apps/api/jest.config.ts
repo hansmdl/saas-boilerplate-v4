@@ -97,6 +97,7 @@ const config: Config = {
   testRegex: '.*\\.spec\\.ts$',
   moduleNameMapper: {
     '^@db/(.*)$': '<rootDir>/../../packages/db/src/$1',
+    '^email/(.*)$': '<rootDir>/../../packages/email/src/$1',
     '^@email/(.*)$': '<rootDir>/../../packages/email/src/$1',
     '^@pipes/(.*)$': '<rootDir>/../../packages/pipes/src/$1',
     '^src/(.*)$': '<rootDir>/src/$1',

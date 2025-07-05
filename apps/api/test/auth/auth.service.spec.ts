@@ -142,7 +142,8 @@ describe('AuthService', () => {
       };
       (jwtService.sign as jest.Mock).mockReturnValueOnce('access_token').mockReturnValueOnce('refresh_token');
 
-      const result = await service.login(user);
+      // Cast as any to match Omit<User, 'password'> without specifying all optional fields
+      const result = await service.login(user as any);
       expect(result).toEqual({ access_token: 'access_token', refresh_token: 'refresh_token' });
       expect(jwtService.sign).toHaveBeenCalledTimes(2);
     });

@@ -17,6 +17,9 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "@email/*": ["packages/email/src/*"],
+      "email": ["packages/email/src"],
+      "email/*": ["packages/email/src/*"],
       "pipes": ["apps/api/src/pipes"]
     }
   },

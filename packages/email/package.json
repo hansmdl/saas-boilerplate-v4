@@ -16,11 +16,14 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.4",
   "dependencies": {
+    "@nestjs/bullmq": "^11.0.2",
+    "bullmq": "^5.56.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@nestjs/common": "^10.3.10",
+    "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "jest-mock-extended": "^4.0.0",

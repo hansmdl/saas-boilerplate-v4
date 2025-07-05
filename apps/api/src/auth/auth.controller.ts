@@ -52,6 +52,36 @@ export class AuthController {
     return { access_token };
   }
 
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Initiates the Google OAuth flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Request() req, @Res() res: Response) {
+    // Handle Google OAuth callback
+    const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
+    this.setCookies(res, accessToken, refreshToken);
+    res.redirect('/');
+  }
+
+  @Get('github')
+  @UseGuards(AuthGuard('github'))
+  async githubAuth() {
+    // Initiates the GitHub OAuth flow
+  }
+
+  @Get('github/callback')
+  @UseGuards(AuthGuard('github'))
+  async githubAuthRedirect(@Request() req, @Res() res: Response) {
+    // Handle GitHub OAuth callback
+    const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
+    this.setCookies(res, accessToken, refreshToken);
+    res.redirect('/');
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@CurrentUser() user: Omit<User, 'password'>) {
@@ -83,5 +113,21 @@ export class AuthController {
   async verifyEmail(@Param('token') token: string) {
     await this.authService.verifyEmail(token);
     return { message: 'Email verified successfully' };
+  }
+
+  private setCookies(res: Response, accessToken: string, refreshToken: string) {
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
   }
 }

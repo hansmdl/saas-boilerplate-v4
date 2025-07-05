@@ -182,4 +182,36 @@ export class AuthService {
       where: { token },
     });
   }
+
+  async socialLogin(user: { email: string; name: string }) {
+    // Find or create user
+    let dbUser = await this.prisma.user.findUnique({
+      where: { email: user.email },
+    });
+
+    if (!dbUser) {
+      dbUser = await this.prisma.user.create({
+        data: {
+          email: user.email,
+          name: user.name,
+          emailVerified: true,
+        },
+      });
+    }
+
+    // Generate tokens
+    const payload = { email: dbUser.email, sub: dbUser.id };
+    
+    const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
+      expiresIn: '15m',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
+      expiresIn: '7d',
+    });
+
+    return { accessToken, refreshToken };
+  }
 }
