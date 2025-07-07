@@ -11,6 +11,11 @@
     "dev:api": "pnpm --filter api start"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^24.0.10",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "cross-env": "^7.0.3",
     "jest-mock-extended": "^4.0.0",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
@@ -18,8 +23,10 @@
   },
   "packageManager": "pnpm@10.12.4",
   "dependencies": {
+    "@nestjs/bullmq": "^11.0.2",
     "@tailwindcss/postcss": "^4.1.11",
     "autoprefixer": "^10.4.21",
+    "bullmq": "^5.56.1",
     "db": "link:packages/db",
     "email": "link:packages/email",
     "postcss": "^8.5.6",

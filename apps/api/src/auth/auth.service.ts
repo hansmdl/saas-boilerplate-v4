@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import type { User } from 'db';
 import { JwtService } from '@nestjs/jwt';
@@ -28,12 +29,15 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: email },
     });
 
     if (user && user.password) {
       const isValidPassword = await bcrypt.compare(pass, user.password);
       if (isValidPassword) {
+        if (!user.emailVerified) {
+          throw new UnauthorizedException('Email no verificado. Por favor revisa tu correo para activar tu cuenta.');
+        }
         return user;
       }
     }
@@ -60,33 +64,47 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<User> {
+    console.log(`🔍 Registration attempt for: ${registerDto.email}`);
     const { email, password } = registerDto;
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
-    });
+    try {
+      // Check if user exists
+      console.log(`🔍 Checking if user ${email} already exists...`);
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: email },
+      });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      if (existingUser) {
+        console.log(`⚠️ Registration failed: User ${email} already exists`);
+        throw new ConflictException('User with this email already exists');
+      }
+
+      // Hash password and create user
+      console.log(`🔍 Creating new user for ${email}...`);
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+        },
+      });
+      console.log(`✅ User created successfully with ID: ${user.id}`);
+
+      // Send verification email
+      console.log(`🔍 Initiating email verification process for ${email}...`);
+      await this.sendVerificationEmail({ email: user.email });
+
+      return user;
+    } catch (error) {
+      console.error(`❌ Registration error for ${email}:`, error instanceof Error ? error.message : error);
+      throw error;
     }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
-    });
-
-    await this.sendVerificationEmail({ email: user.email });
-
-    return user;
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<void> {
     const { email } = forgotPasswordDto;
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email: email } });
 
     if (!user) {
       // Don't reveal if user exists or not
@@ -142,45 +160,102 @@ export class AuthService {
   async sendVerificationEmail(
     sendVerificationEmailDto: SendVerificationEmailDto,
   ): Promise<void> {
+    console.log(`🔍 Processing verification email request for: ${sendVerificationEmailDto.email}`);
     const { email } = sendVerificationEmailDto;
-    const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user || user.emailVerified) {
-      return;
+    try {
+      // Find user
+      console.log(`🔍 Finding user for email verification: ${email}`);
+      const user = await this.prisma.user.findUnique({ where: { email: email } });
+
+      if (!user) {
+        console.log(`⚠️ Email verification skipped: User ${email} not found`);
+        return;
+      }
+      
+      if (user.emailVerified) {
+        console.log(`⚠️ Email verification skipped: User ${email} already verified`);
+        return;
+      }
+
+      // Create verification token
+      console.log(`🔍 Creating email verification token for user ID: ${user.id}`);
+      const token = randomUUID();
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+
+      await this.prisma.emailVerificationToken.create({
+        data: {
+          userId: user.id,
+          token,
+          expiresAt,
+        },
+      });
+      console.log(`✅ Verification token created: ${token.substring(0, 8)}... (expires ${expiresAt})`);
+
+      // Queue email job
+      console.log(`🔍 Adding verification email to queue for: ${email}`);
+      const job = await this.emailQueue.add('sendEmailVerificationEmail', { email, token });
+      console.log(`✅ Email job queued successfully with ID: ${job.id}`);
+    } catch (error) {
+      console.error(`❌ Error sending verification email for ${email}:`, error instanceof Error ? error.message : error);
+      throw error;
     }
-
-    const token = randomUUID();
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
-
-    await this.prisma.emailVerificationToken.create({
-      data: {
-        userId: user.id,
-        token,
-        expiresAt,
-      },
-    });
-
-    await this.emailQueue.add('sendEmailVerificationEmail', { email, token });
   }
 
   async verifyEmail(token: string): Promise<void> {
-    const verificationToken =
-      await this.prisma.emailVerificationToken.findUnique({
+    console.log(`🔍 Verifying email with token: ${token.substring(0, 8)}...`);
+
+    try {
+      // Find token
+      console.log(`🔍 Searching for verification token in database...`);
+      const verificationToken = await this.prisma.emailVerificationToken.findUnique({
         where: { token },
       });
 
-    if (!verificationToken || new Date() > verificationToken.expiresAt) {
-      throw new UnauthorizedException('Invalid or expired verification token');
+      if (!verificationToken) {
+        console.log(`❌ Verification failed: Token not found in database`);
+        throw new UnauthorizedException('Token de verificación inválido o expirado.');
+      }
+      console.log(`✅ Token found, user ID: ${verificationToken.userId}, expires: ${verificationToken.expiresAt}`);
+
+      // Check token expiration
+      if (new Date() > verificationToken.expiresAt) {
+        console.log(`❌ Verification failed: Token expired at ${verificationToken.expiresAt}`);
+        await this.prisma.emailVerificationToken.delete({ where: { token } });
+        throw new UnauthorizedException('Token de verificación expirado. Solicita uno nuevo.');
+      }
+
+      // Find user
+      console.log(`🔍 Finding user with ID: ${verificationToken.userId}`);
+      const user = await this.prisma.user.findUnique({ where: { id: verificationToken.userId } });
+      if (!user) {
+        console.log(`❌ Verification failed: User not found for token`);
+        await this.prisma.emailVerificationToken.delete({ where: { token } });
+        throw new UnauthorizedException('Usuario no encontrado.');
+      }
+      console.log(`✅ User found: ${user.email}`);
+
+      // Check if already verified
+      if (user.emailVerified) {
+        console.log(`⚠️ Email already verified for user: ${user.email}`);
+        await this.prisma.emailVerificationToken.delete({ where: { token } });
+        throw new BadRequestException('El email ya fue verificado previamente.');
+      }
+
+      // Update user and delete token
+      console.log(`🔍 Updating user ${user.email} to verified status...`);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+      });
+      console.log(`✅ User ${user.email} verified successfully`);
+
+      await this.prisma.emailVerificationToken.delete({ where: { token } });
+      console.log(`✅ Verification token deleted from database`);
+    } catch (error) {
+      console.error(`❌ Email verification error:`, error instanceof Error ? error.message : error);
+      throw error;
     }
-
-    await this.prisma.user.update({
-      where: { id: verificationToken.userId },
-      data: { emailVerified: true },
-    });
-
-    await this.prisma.emailVerificationToken.delete({
-      where: { token },
-    });
   }
 
   async socialLogin(user: { email: string; name: string }) {

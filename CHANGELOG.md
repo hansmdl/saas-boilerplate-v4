@@ -1,3 +1,12 @@
+## 2025-07-06 - 21:02
+
+* **fix:** Corregida arquitectura del paquete email para separar correctamente archivos fuente (.ts) y compilados (.js/.d.ts)
+* **fix:** Actualizada configuración de TypeScript para habilitar decoradores y metadatos en el paquete email
+* **fix:** Corregidas rutas en el package.json del paquete email para apuntar a la ubicación correcta de los archivos compilados
+* **fix:** Mejorada integración del EmailProcessor con BullMQ y NestJS 11 asegurando registro correcto del worker
+* **fix:** Añadido endpoint para limpiar la cola de email (/email/clear-queue)
+* **fix:** Mejorado manejo de errores y logging en el procesador de emails
+
 ## 2025-07-05 - 00:02
 
 * **feat:** Implemented BullMQ email processor integration for password reset and email verification workflows

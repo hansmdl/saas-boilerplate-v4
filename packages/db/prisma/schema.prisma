@@ -64,6 +64,7 @@ model User {
   roles                            Role[]    @default([USER])
   isTwoFactorEnabled               Boolean   @default(false)
   twoFactorSecret                  String?
+  existe                           Boolean   @default(false) // Added to fix the Prisma error
 
   // Relations
   memberships             OrganizationMembership[]

@@ -4,6 +4,14 @@
     "composite": true,
     "outDir": "dist",
     "baseUrl": ".",
+    "declaration": true,
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictNullChecks": true,
+    "target": "ES2022",
+    "module": "commonjs",
+    "esModuleInterop": true,
     "paths": {
       "@email/*": ["src/*"]
     }

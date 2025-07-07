@@ -8,6 +8,7 @@ import {
   Res,
   UseGuards,
   UsePipes,
+  Query,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
