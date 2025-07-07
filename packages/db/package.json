@@ -12,7 +12,8 @@
     "build": "tsc -b && node scripts/copy-generated.js",
     "dev": "tsc -b --watch",
     "seed": "ts-node prisma/seed.ts",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "keywords": [],
   "author": "",

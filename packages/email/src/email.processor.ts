@@ -32,6 +32,9 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
         case 'securityNotification':
           await this.handleSecurityNotification(data.email, data.subject, data.text);
           break;
+        case 'sendEmailVerificationEmail':
+          await this.handleSendEmailVerificationEmail(data.email, data.token, data.expiresAt);
+          break;
         default:
           this.logger.warn(`🟡 Unsupported email job type: ${name}`);
           throw new Error(`Unsupported email job type: ${name}`);
@@ -40,6 +43,33 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
       return { success: true };
     } catch (error: any) {
       this.logger.error(`❌ Error processing email job ${name}:`, error?.message || error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sends verification email for account confirmation
+   */
+  private async handleSendEmailVerificationEmail(email: string, token: string, expiresAt: string): Promise<void> {
+    this.logger.log(`📧 Enviando email de verificación a: ${email}`);
+    try {
+      const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email/${token}`;
+      const htmlContent = `
+        <h1>Confirma tu correo electrónico</h1>
+        <p>Gracias por registrarte. Por favor, haz clic en el siguiente enlace para verificar tu cuenta:</p>
+        <a href="${verificationUrl}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:white;border-radius:6px;text-decoration:none;font-weight:bold;">Verificar correo</a>
+        <p>Este enlace expirará el: <b>${new Date(expiresAt).toLocaleString()}</b></p>
+        <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+      `;
+      await this.emailService.sendEmail(
+        email,
+        'Verifica tu correo electrónico',
+        `Por favor verifica tu cuenta usando este enlace: ${verificationUrl}. El enlace expirará el ${new Date(expiresAt).toLocaleString()}.`,
+        htmlContent
+      );
+      this.logger.log(`✅ Email de verificación enviado a ${email}`);
+    } catch (error: any) {
+      this.logger.error(`❌ Error al enviar email de verificación a ${email}:`, error?.message || error);
       throw error;
     }
   }

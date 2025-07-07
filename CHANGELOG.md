@@ -1,3 +1,15 @@
+## 2025-07-07 - 15:30
+
+* **fix:** Solucionado problema de BullMQ en Windows con ESM
+  - Corregido error "File does not exist" en el procesador de email en entornos Windows
+  - Implementada solución compatible con ESM que utiliza decoradores nativos de NestJS
+  - Documentada la solución en `/docs/email-processor-windows-fix.md`
+* **feat:** Implementado flujo completo de verificación de email
+  - Integración de cola de emails usando BullMQ y NestJS 11
+  - Envío de correos de verificación al registrarse
+  - Endpoint para verificar tokens de email (/auth/verify-email/:token)
+* **docs:** Añadida documentación detallada sobre la implementación del procesador de emails en Windows
+
 ## 2025-07-07 - 10:36
 
 * **test:** Pruebas unitarias completas (en español) para autenticación de dos factores (2FA)
