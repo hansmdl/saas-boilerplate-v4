@@ -61,11 +61,20 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Request() req, @Res() res: Response) {
-    // Handle Google OAuth callback
-    const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
-    this.setCookies(res, accessToken, refreshToken);
-    res.redirect('/');
+  async googleAuthRedirect(@Request() req, @Res() res: Response, @Query('state') state?: string) {
+    try {
+      // Handle Google OAuth callback
+      const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
+      this.setCookies(res, accessToken, refreshToken);
+      
+      // Determinar la URL de redirección
+      const redirectUrl = this.getRedirectUrl(state);
+      console.log(`🔄 Redirigiendo después de login con Google a: ${redirectUrl}`);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('❌ Error en Google OAuth callback:', error instanceof Error ? error.message : error);
+      res.redirect(`/login?error=${encodeURIComponent('Error durante la autenticación con Google')}`);
+    }
   }
 
   @Get('github')
@@ -76,11 +85,72 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
-  async githubAuthRedirect(@Request() req, @Res() res: Response) {
-    // Handle GitHub OAuth callback
-    const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
-    this.setCookies(res, accessToken, refreshToken);
-    res.redirect('/');
+  async githubAuthRedirect(@Request() req, @Res() res: Response, @Query('state') state?: string) {
+    try {
+      // Handle GitHub OAuth callback
+      const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
+      this.setCookies(res, accessToken, refreshToken);
+      
+      // Determinar la URL de redirección
+      const redirectUrl = this.getRedirectUrl(state);
+      console.log(`🔄 Redirigiendo después de login con GitHub a: ${redirectUrl}`);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('❌ Error en GitHub OAuth callback:', error instanceof Error ? error.message : error);
+      res.redirect(`/login?error=${encodeURIComponent('Error durante la autenticación con GitHub')}`);
+    }
+  }
+
+  /**
+   * Establece las cookies de autenticación en la respuesta
+   */
+  private setCookies(res: Response, accessToken: string, refreshToken: string): void {
+    // Configurar cookie para el token de acceso
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutos
+    });
+
+    // Configurar cookie para el token de refresco
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+    });
+  }
+
+  /**
+   * Determina la URL de redirección después del login social
+   */
+  private getRedirectUrl(state?: string): string {
+    // Si hay un estado y es una URL válida, usar esa URL
+    if (state) {
+      try {
+        // Intentar decodificar el estado (puede estar en base64 o URL encoded)
+        let decodedState: string;
+        try {
+          decodedState = Buffer.from(state, 'base64').toString('utf-8');
+        } catch (e) {
+          decodedState = decodeURIComponent(state);
+        }
+        
+        // Validar que sea una URL interna válida
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        
+        // Asegurarse que la URL de redirección sea relativa o del mismo dominio
+        if (decodedState.startsWith('/') || decodedState.startsWith(frontendUrl)) {
+          return decodedState;
+        }
+      } catch (error) {
+        console.warn(`Estado inválido en callback OAuth: ${state}`);
+      }
+    }
+    
+    // URL predeterminada si no hay estado válido
+    return process.env.FRONTEND_URL || 'http://localhost:3000';
   }
 
   @UseGuards(JwtAuthGuard)
@@ -116,19 +186,5 @@ export class AuthController {
     return { message: 'Email verified successfully' };
   }
 
-  private setCookies(res: Response, accessToken: string, refreshToken: string) {
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-  }
 }

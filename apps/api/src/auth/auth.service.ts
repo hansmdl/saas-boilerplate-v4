@@ -259,23 +259,37 @@ export class AuthService {
   }
 
   async socialLogin(user: { email: string; name: string }) {
+    console.log(`🔍 Social login attempt for: ${user.email}`);
     // Find or create user
     let dbUser = await this.prisma.user.findUnique({
       where: { email: user.email },
     });
 
     if (!dbUser) {
+      console.log(`🔍 Creating new user for social login: ${user.email}`);
       dbUser = await this.prisma.user.create({
         data: {
           email: user.email,
           name: user.name,
-          emailVerified: true,
+          emailVerified: true, // Social logins are pre-verified
         },
       });
+      console.log(`✅ New user created with ID: ${dbUser.id} for social login`);
+    } else {
+      console.log(`✅ Existing user found for social login: ${user.email}`);
+      // Update the name if it's different
+      if (user.name && (!dbUser.name || dbUser.name !== user.name)) {
+        console.log(`🔄 Updating user name for ${user.email} to: ${user.name}`);
+        await this.prisma.user.update({
+          where: { id: dbUser.id },
+          data: { name: user.name },
+        });
+      }
     }
 
     // Generate tokens
     const payload = { email: dbUser.email, sub: dbUser.id };
+    console.log(`🔑 Generating tokens for user: ${dbUser.email}`);
     
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
@@ -283,10 +297,11 @@ export class AuthService {
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_REFRESH_SECRET, // Corregido: usar refresh secret
       expiresIn: '7d',
     });
 
+    console.log(`✅ Tokens generated successfully for social login: ${dbUser.email}`);
     return { accessToken, refreshToken };
   }
 }

@@ -49,22 +49,21 @@ enum Role {
 // ──────────────────────────────────────────────────────────────
 
 model User {
-  id                               String    @id @default(uuid())
-  email                            String    @unique
-  password                         String? // Optional if using social login
-  name                             String?
-  emailVerified                    Boolean   @default(false)
-  createdAt                        DateTime  @default(now())
-  updatedAt                        DateTime  @updatedAt
-  deletedAt                        DateTime?
-  userType                         UserType  @default(REGULAR)
-  isTwoFactorAuthenticationEnabled Boolean   @default(false)
-  twoFactorAuthenticationSecret    String?
-  metadata                         Json?
-  roles                            Role[]    @default([USER])
-  isTwoFactorEnabled               Boolean   @default(false)
-  twoFactorSecret                  String?
-  existe                           Boolean   @default(false) // Added to fix the Prisma error
+  id                          String    @id @default(uuid())
+  email                         String    @unique
+  password                      String? // Optional if using social login
+  name                          String?
+  emailVerified                 Boolean   @default(false)
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  deletedAt                     DateTime?
+  userType                      UserType  @default(REGULAR)
+  isTwoFactorEnabled            Boolean   @default(false)
+  twoFactorSecret               String?
+  twoFactorRecoveryCodeUsed     Boolean   @default(false)
+  twoFactorRecoveryCode         String?
+  metadata                      Json?
+  roles                         Role[]    @default([USER])
 
   // Relations
   memberships             OrganizationMembership[]
