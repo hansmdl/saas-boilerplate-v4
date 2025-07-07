@@ -1,3 +1,10 @@
+## 2025-07-07 - 10:36
+
+* **test:** Pruebas unitarias completas (en español) para autenticación de dos factores (2FA)
+  - Se implementan pruebas para todos los endpoints del controlador TwoFactorController (generar, habilitar, deshabilitar, recuperar, enviar y verificar código por email).
+  - Se implementan pruebas para todos los métodos utilitarios de TwoFactorUtils (generación y verificación de códigos, generación de URL QR).
+  - Se asegura cobertura de casos principales y mensajes descriptivos en español.
+
 ## 2025-07-07 - 00:15
 
 * **feat:** Implemented complete Two-Factor Authentication system

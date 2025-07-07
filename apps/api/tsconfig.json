@@ -24,6 +24,9 @@
       "pipes": ["apps/api/src/pipes"]
     }
   },
+  // NOTA: La importación de la base de datos debe hacerse usando el nombre del package ("db"),
+  // por ejemplo: import { PrismaService } from 'db';
+  // No se requieren alias adicionales en "paths" para este caso.
   "include": ["src/**/*.ts", "test/**/*.ts"],
   // Restart
   "references": [
