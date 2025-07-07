@@ -20,7 +20,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
-    "@nestjs/bullmq": "^11.0.3",
+    "@nestjs/bullmq": "^11.0.2",
     "@types/nodemailer": "^6.4.17",
     "bullmq": "^5.56.1",
     "nodemailer": "^7.0.4",

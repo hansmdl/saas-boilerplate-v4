@@ -9,6 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { GitHubStrategy } from './strategies/github.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { GitHubStrategy } from './strategies/github.strategy';
     JwtStrategy,
     GoogleStrategy,
     GitHubStrategy,
+    LocalStrategy,
   ],
 })
 export class AuthModule {}

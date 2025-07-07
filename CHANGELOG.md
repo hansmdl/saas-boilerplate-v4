@@ -1,3 +1,29 @@
+## 2025-07-07 - 16:18
+
+* **fix(auth):** Registro correcto de LocalStrategy en AuthModule
+  - Se soluciona el error "Unknown authentication strategy 'local'" añadiendo LocalStrategy a los providers de `auth.module.ts`.
+  - Ahora el login con email y password funciona correctamente y bloquea usuarios no verificados.
+* **fix(ui):** Corrección de exportaciones y estructura de componentes UI
+  - Unificación de exports en `packages/ui/src/index.ts` para permitir imports limpios desde `ui`.
+  - Eliminados duplicados y errores de identificador en `card.tsx`.
+  - Se agregan archivos base de componentes UI: `alert.tsx`, `button.tsx`, `checkbox.tsx`, `input.tsx`, `label.tsx`, `textarea.tsx`.
+* **fix(email):** Actualización de dependencias
+  - Corrección de la versión de `@nestjs/bullmq` en `packages/email/package.json` para evitar errores de instalación.
+
+**Archivos modificados:**
+- `apps/api/src/auth/auth.module.ts`
+- `packages/ui/src/card.tsx`
+- `packages/ui/src/index.ts`
+- `packages/email/package.json`
+
+**Nuevos archivos UI:**
+- `packages/ui/src/alert.tsx`
+- `packages/ui/src/button.tsx`
+- `packages/ui/src/checkbox.tsx`
+- `packages/ui/src/input.tsx`
+- `packages/ui/src/label.tsx`
+- `packages/ui/src/textarea.tsx`
+
 ## 2025-07-07 - 15:30
 
 * **fix:** Solucionado problema de BullMQ en Windows con ESM
