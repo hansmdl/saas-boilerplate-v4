@@ -36,8 +36,8 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
           await this.handleSendEmailVerificationEmail(data.email, data.token, data.expiresAt);
           break;
         default:
-          this.logger.warn(`🟡 Unsupported email job type: ${name}`);
-          throw new Error(`Unsupported email job type: ${name}`);
+          // Ignora jobs no soportados por este processor (multi-processor BullMQ)
+          return { success: false, reason: `Job not handled by EmailProcessor: ${name}` };
       }
       
       return { success: true };

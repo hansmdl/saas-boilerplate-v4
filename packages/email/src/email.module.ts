@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailProcessor } from "./email.processor"
+import { PasswordResetProcessor } from './password-reset.processor';
 import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
 import { pathToFileURL } from 'url';
@@ -17,7 +18,7 @@ import * as path from 'path';
     }),
   ],
   controllers: [EmailController], // Exponemos el controlador para poder limpiar la cola
-  providers: [EmailService, EmailProcessor],
-  exports: [EmailService, EmailProcessor], // Exportamos el procesador también
+  providers: [EmailService, EmailProcessor, PasswordResetProcessor],
+  exports: [EmailService, EmailProcessor, PasswordResetProcessor], // Exportamos ambos procesadores
 })
 export class EmailModule {}

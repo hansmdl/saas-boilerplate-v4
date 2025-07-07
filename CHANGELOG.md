@@ -1,3 +1,31 @@
+## 2025-07-07 - 17:00
+
+* **feat(auth/email):** Flujo robusto de recuperación y restablecimiento de contraseña
+  - Implementado PasswordResetProcessor dedicado para manejar jobs de recuperación de contraseña en BullMQ/NestJS.
+  - Ajustado EmailProcessor para coexistencia limpia de múltiples tipos de job.
+  - Email de recuperación de contraseña ahora se envía correctamente y con token seguro.
+* **fix(auth):** Validación estricta en restablecimiento de contraseña
+  - El endpoint `/auth/reset-password` solo acepta `{ token, password }` y valida con Zod mínimo 8 caracteres.
+  - Manejo seguro de errores y mensajes claros en backend y frontend.
+* **feat(web):** Pantalla moderna de restablecimiento de contraseña
+  - Refactor completo de `/reset-password/[token]` usando React Hook Form y Zod.
+  - Validación local de confirmación de contraseña, UX amigable y mensajes de error claros.
+  - Corrección de imports y tipado estricto en `/verify-email/[token]`.
+* **infra:** El sistema de colas y email processors arranca sin errores ni advertencias críticas.
+
+**Archivos modificados:**
+- `packages/email/src/password-reset.processor.ts`
+- `packages/email/src/email.processor.ts`
+- `packages/email/src/email.module.ts`
+- `apps/web/src/app/reset-password/[token]/page.tsx`
+- `apps/web/src/app/verify-email/[token]/page.tsx`
+
+**Notas:**
+- Redis sigue mostrando advertencia de versión mínima recomendada (6.2.0), pero no afecta funcionalidad.
+- Flujo de recuperación y restablecimiento de contraseña probado end-to-end.
+
+---
+
 ## 2025-07-07 - 16:18
 
 * **fix(auth):** Registro correcto de LocalStrategy en AuthModule
