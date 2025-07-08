@@ -1,6 +1,9 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from './generated/prisma/client';
 
+/**
+ * Servicio Prisma extendido para asegurar disponibilidad de todos los modelos
+ */
 @Injectable()
 export class PrismaService
   extends PrismaClient

@@ -13,8 +13,10 @@ import {
 import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { MagicLinkService } from './magic-link.service';
+import { MagicLinkRequestDto, magicLinkRequestSchema } from './dto/magic-link.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { registerSchema, type RegisterDto } from './dto/register.dto';
 import { loginSchema } from './dto/login.dto';
 import { forgotPasswordSchema, type ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -24,7 +26,35 @@ import type { User } from 'db';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly magicLinkService: MagicLinkService,
+  ) {}
+
+  @Post('magic-link-request')
+  @UsePipes(new ZodValidationPipe(magicLinkRequestSchema))
+  async requestMagicLink(@Body() dto: MagicLinkRequestDto) {
+    // Usa FRONTEND_URL para armar el link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const link = await this.magicLinkService.createMagicLinkToken(dto, frontendUrl);
+    // Aquí deberías enviar el email vía processor/email (no implementado aquí)
+    // Por ahora solo retorna éxito (nunca revela si existe o no el email)
+    return { message: 'Si el email existe, se ha enviado el enlace de acceso.' };
+  }
+
+  @Get('magic-link/:token')
+  async consumeMagicLink(@Param('token') token: string, @Res({ passthrough: true }) res) {
+    const user = await this.magicLinkService.consumeMagicLinkToken(token);
+    // Autentica y retorna JWT igual que en login
+    const { access_token, refresh_token } = await this.authService.login(user);
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return { access_token };
+  }
 
   @Post('register')
   @UsePipes(new ZodValidationPipe(registerSchema))

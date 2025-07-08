@@ -71,6 +71,30 @@
   - Se implementan pruebas para todos los métodos utilitarios de TwoFactorUtils (generación y verificación de códigos, generación de URL QR).
   - Se asegura cobertura de casos principales y mensajes descriptivos en español.
 
+## [Unreleased]
+
+### Fixed
+- Corregido error de tipos en el servicio `MagicLinkService` que impedía la compilación
+- Solucionado problema con la generación de tipos de Prisma para el modelo `MagicLinkToken`
+- Mejorado el manejo de errores en el flujo de autenticación con magic links
+- Corregida la configuración del servicio de correo electrónico para el envío de emails de verificación
+
+### Added
+- Implementado soporte completo para autenticación con magic links
+- Añadido modelo `MagicLinkToken` al esquema de Prisma
+- Configurado el servicio de correo electrónico para enviar emails de verificación
+- Agregadas rutas de API para el manejo de magic links
+
+### Changed
+- Actualizada la documentación del servicio de autenticación
+- Mejorado el manejo de errores en los controladores de autenticación
+- Optimizado el proceso de generación y validación de tokens
+
+### Security
+- Asegurada la correcta invalidación de tokens después de su uso
+- Implementada verificación de expiración de tokens
+- Añadida protección contra ataques de fuerza bruta en los endpoints de autenticación
+
 ## 2025-07-07 - 00:15
 
 * **feat:** Implemented complete Two-Factor Authentication system
