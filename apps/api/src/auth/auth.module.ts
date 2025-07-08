@@ -22,6 +22,7 @@ import { LocalStrategy } from './strategies/local.strategy';
       },
     }),
     BullModule.registerQueue({ name: 'email' }),
+    BullModule.registerQueue({ name: 'password-reset' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

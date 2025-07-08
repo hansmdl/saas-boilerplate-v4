@@ -25,6 +25,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly prisma: PrismaService,
     @InjectQueue('email') private emailQueue: Queue,
+@InjectQueue('password-reset') private passwordResetQueue: Queue,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<User | null> {
@@ -122,7 +123,14 @@ export class AuthService {
       },
     });
 
-    await this.emailQueue.add('sendPasswordResetEmail', { email, token });
+    try {
+      console.log(`🔍 Adding password reset job to queue for: ${email} (expires: ${expiresAt.toISOString()})`);
+      const job = await this.passwordResetQueue.add('sendPasswordResetEmail', { email, token, expiresAt });
+      console.log(`✅ Password reset job queued successfully with ID: ${job.id}`);
+    } catch (error) {
+      console.error(`❌ Error queueing password reset email for ${email}:`, error instanceof Error ? error.message : error);
+      throw error;
+    }
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {

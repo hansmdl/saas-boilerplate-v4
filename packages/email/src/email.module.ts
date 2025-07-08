@@ -9,17 +9,10 @@ import * as path from 'path';
 
 @Module({
   imports: [
-    // No configuramos BullModule.forRoot() aquí porque ya se configura en AuthModule
-    // En este enfoque, no configuramos procesadores externos
-    // Lo que hacemos es usar el decorador @Processor y dejar que NestJS se encargue
-    // Esto evita que BullMQ intente cargar archivos desde rutas del sistema
-    BullModule.registerQueue(
-      { name: 'email' },
-      { name: 'password-reset' },
-    ),
+    BullModule.registerQueue({ name: 'email' }),
   ],
-  controllers: [EmailController], // Exponemos el controlador para poder limpiar la cola
-  providers: [EmailService, EmailProcessor, PasswordResetProcessor],
-  exports: [EmailService, EmailProcessor, PasswordResetProcessor], // Exportamos ambos procesadores
+  controllers: [EmailController],
+  providers: [EmailService, EmailProcessor],
+  exports: [EmailService, EmailProcessor],
 })
 export class EmailModule {}

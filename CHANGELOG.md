@@ -1,3 +1,19 @@
+## 2025-07-08 - 18:36
+
+* **fix(auth/bullmq):** Registro correcto de la cola `password-reset` en `AuthModule` para inyección BullMQ y robustez del flujo de recuperación de contraseña
+  - Se añadió `BullModule.registerQueue({ name: 'password-reset' })` en `apps/api/src/auth/auth.module.ts`.
+  - Se corrigió la inyección de la cola en `AuthService` y el encolado de jobs de recuperación de contraseña.
+  - Flujo de "olvidé mi contraseña" probado end-to-end: el job se encola y procesa correctamente, el email se envía sin errores.
+
+**Archivos modificados:**
+- `apps/api/src/auth/auth.module.ts`
+- `apps/api/src/auth/auth.service.ts`
+
+**Notas:**
+- El backend arranca sin errores de dependencias BullMQ.
+- El flujo de recuperación de contraseña es seguro, robusto y desacoplado del resto de los emails.
+
+---
 ## 2025-07-08 - 16:35
 
 * **infra(auth/email):** Dockerización y robustez total del flujo de autenticación y email
