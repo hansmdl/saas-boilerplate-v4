@@ -201,24 +201,6 @@ model EmailVerificationToken {
 
   @@unique([userId, token])
 }
-
-// ──────────────────────────────────────────────────────────────
-// MAGIC LINK TOKEN
-// ──────────────────────────────────────────────────────────────
-
-model MagicLinkToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  expiresAt DateTime
-  consumed  Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, token])
-}
-
 // ──────────────────────────────────────────────────────────────
 // BILLING: CUSTOMER & SUBSCRIPTION
 // ──────────────────────────────────────────────────────────────

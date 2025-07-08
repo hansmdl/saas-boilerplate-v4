@@ -8,7 +8,7 @@ import { EmailService } from './email.service';
  * Maneja el envío de emails para el flujo de "forgot password"
  */
 @Injectable()
-@Processor('email')
+@Processor('password-reset')
 export class PasswordResetProcessor extends WorkerHost {
   private readonly logger = new Logger(PasswordResetProcessor.name);
 

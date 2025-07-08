@@ -1,3 +1,33 @@
+## 2025-07-08 - 16:35
+
+* **infra(auth/email):** Dockerización y robustez total del flujo de autenticación y email
+  - Solucionado el build y arranque de todo el monorepo en Docker (web, api, staff, db, redis).
+  - Fix crítico: Prisma CLI y Client ahora siempre disponibles en producción (migrados a dependencies en `packages/db/package.json`).
+  - Actualizado el lockfile y build reproducible con `pnpm install && docker compose build`.
+  - Separación definitiva de colas BullMQ: `email` y `password-reset` para evitar jobs no soportados y warnings de workers.
+  - Fix de permisos (EACCES) en `/app/packages/db` dentro del contenedor Docker: documentado uso de `chmod -R 755 /app/packages/db` si es necesario.
+  - Comando universal para migraciones Prisma en Docker:
+    ```sh
+    docker compose exec api npx --prefix /app/packages/db prisma migrate deploy
+    ```
+  - EmailProcessor y PasswordResetProcessor correctamente inicializados y escuchando solo sus colas.
+  - Email de verificación y recuperación de contraseña funcionan end-to-end en entorno Docker.
+  - Documentado el flujo recomendado de comandos para build, up, migraciones y troubleshooting en README y changelog.
+
+**Archivos modificados:**
+- `packages/email/src/email.module.ts`
+- `packages/email/src/password-reset.processor.ts`
+- `packages/db/package.json`
+- `Dockerfile.api`
+- `README.md`
+
+**Notas:**
+- El atributo `version` de `docker-compose.yml` es obsoleto y puede eliminarse.
+- Todos los servicios arrancan sin errores críticos ni warnings de colas BullMQ.
+- Comandos pnpm --filter db ... siguen funcionando en local para desarrollo.
+- Flujo de registro y verificación de email probado y funcional en Docker.
+
+---
 ## 2025-07-07 - 17:00
 
 * **feat(auth/email):** Flujo robusto de recuperación y restablecimiento de contraseña

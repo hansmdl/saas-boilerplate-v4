@@ -1,0 +1,32 @@
+# Dockerfile para apps/api (NestJS)
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+# Instala dependencias de compilación necesarias para bcrypt y otros módulos nativos
+RUN apk add --no-cache python3 make g++
+
+COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./
+COPY ./apps/api/package.json ./apps/api/
+COPY ./packages/db/package.json ./packages/db/
+COPY ./packages/email/package.json ./packages/email/
+COPY ./packages/config/package.json ./packages/config/
+COPY ./packages/ui/package.json ./packages/ui/
+
+RUN npm install -g pnpm@10 && pnpm install --frozen-lockfile
+
+COPY . .
+
+# Genera Prisma Client en el entorno Linux del contenedor
+WORKDIR /app/packages/db
+RUN pnpm run prisma:generate
+
+# Verificar que el cliente Prisma se generó correctamente
+RUN ls -la ./src/generated/prisma/
+RUN cat ./src/index.ts
+
+WORKDIR /app/apps/api
+RUN pnpm build
+
+EXPOSE 3002
+CMD ["pnpm", "start"]

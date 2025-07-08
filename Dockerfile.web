@@ -1,0 +1,18 @@
+# Dockerfile para apps/web (Next.js)
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Instala dependencias de compilación necesarias para módulos nativos
+RUN apk add --no-cache python3 make g++
+
+COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./
+COPY ./apps/web/package.json ./apps/web/
+COPY ./packages/ui/package.json ./packages/ui/
+COPY ./packages/config/package.json ./packages/config/
+RUN npm install -g pnpm@10 && pnpm install --frozen-lockfile
+COPY . .
+WORKDIR /app/apps/web
+ENV NEXTJS_IGNORE_ESLINT_ERRORS=true
+RUN pnpm build
+EXPOSE 3000
+CMD ["pnpm", "start"]
