@@ -1,0 +1,49 @@
+_format_version: "3.0"
+
+services:
+  - name: api-saas
+    url: http://bp-api:3002
+    routes:
+      - name: api-root
+        paths:
+          - /api
+        strip_path: true
+        preserve_host: false
+
+plugins:
+  - name: cors
+    service: api-saas
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - Origin
+        - X-Requested-With
+        - X-Refresh-Token
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    service: api-saas
+    config:
+      minute: 60
+      policy: local
+
+  - name: jwt
+    service: api-saas
+    config:
+      claims_to_verify:
+        - exp
+      key_claim_name: kid
+      secret_is_base64: false
+
+# Puedes agregar más plugins según necesidades.
