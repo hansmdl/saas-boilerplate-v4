@@ -9,6 +9,23 @@ services:
           - /api
         strip_path: true
         preserve_host: false
+      
+  - name: api-auth
+    url: http://bp-api:3002/auth
+    routes:
+      - name: auth-public
+        paths:
+          - /api/auth/login
+          - /api/auth/register
+          - /api/auth/forgot-password
+          - /api/auth/reset-password
+          - /api/auth/verify-email
+          - /api/auth/google
+          - /api/auth/google/callback
+          - /api/auth/magic-link-request
+          - /api/auth/magic-link
+        strip_path: false
+        preserve_host: false
 
 plugins:
   - name: cors
@@ -45,5 +62,36 @@ plugins:
         - exp
       key_claim_name: kid
       secret_is_base64: false
+      # No aplicar JWT a las rutas públicas de autenticación
+      run_on_preflight: false
+      
+  # Configuración específica para rutas públicas de autenticación
+  - name: cors
+    service: api-auth
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - Origin
+        - X-Requested-With
+        - X-Refresh-Token
+      credentials: true
+      max_age: 3600
+      
+  # Rate limiting para rutas de autenticación
+  - name: rate-limiting
+    service: api-auth
+    config:
+      minute: 30
+      policy: local
 
 # Puedes agregar más plugins según necesidades.

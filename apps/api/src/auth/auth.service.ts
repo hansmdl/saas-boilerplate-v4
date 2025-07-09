@@ -3,11 +3,12 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException
 } from '@nestjs/common';
 import type { User } from 'db';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
 import { EmailService } from 'email';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -33,16 +34,32 @@ export class AuthService {
       where: { email: email },
     });
 
-    if (user && user.password) {
-      const isValidPassword = await bcrypt.compare(pass, user.password);
-      if (isValidPassword) {
-        if (!user.emailVerified) {
-          throw new UnauthorizedException('Email no verificado. Por favor revisa tu correo para activar tu cuenta.');
-        }
-        return user;
-      }
+    if (!user) {
+      // No revelamos si el usuario existe o no por seguridad
+      return null;
     }
-    return null;
+
+    if (!user.password) {
+      // Usuario registrado con autenticación social
+      throw new UnauthorizedException('Esta cuenta fue registrada con autenticación social. Por favor inicia sesión con ese método.');
+    }
+
+    const isValidPassword = await bcrypt.compare(pass, user.password);
+    if (!isValidPassword) {
+      return null;
+    }
+
+    // Verificar si el email está verificado
+    if (!user.emailVerified) {
+      // Generamos un nuevo token de verificación para facilitar al usuario
+      await this.sendVerificationEmail({ email: user.email });
+      throw new UnauthorizedException({
+        message: 'Email no verificado. Se ha enviado un nuevo correo de verificación.',
+        code: 'EMAIL_NOT_VERIFIED'
+      });
+    }
+
+    return user;
   }
 
   async login(user: Omit<User, 'password'>) {
@@ -165,56 +182,95 @@ export class AuthService {
     });
   }
 
-  async sendVerificationEmail(
-    sendVerificationEmailDto: SendVerificationEmailDto,
-  ): Promise<void> {
-    console.log(`🔍 Processing verification email request for: ${sendVerificationEmailDto.email}`);
-    const { email } = sendVerificationEmailDto;
+  /**
+   * Envía un correo de verificación al usuario
+   * @param dto Objeto con el email del usuario
+   * @returns Información sobre el resultado del envío
+   * @throws NotFoundException si el usuario no existe
+   * @throws BadRequestException si el email ya está verificado
+   */
+  async sendVerificationEmail(dto: { email: string }): Promise<{ email: string; sent: boolean }> {
+    const { email } = dto;
 
     try {
-      // Find user
-      console.log(`🔍 Finding user for email verification: ${email}`);
-      const user = await this.prisma.user.findUnique({ where: { email: email } });
+      console.log(`📧 Sending verification email to ${email}...`);
 
+      // Buscar usuario
+      const user = await this.prisma.user.findUnique({ where: { email } });
       if (!user) {
-        console.log(`⚠️ Email verification skipped: User ${email} not found`);
-        return;
+        console.log(`❌ User with email ${email} not found`);
+        throw new NotFoundException({
+          message: `Usuario con email ${email} no encontrado`,
+          code: 'USER_NOT_FOUND'
+        });
       }
-      
+
+      // Verificar si ya está verificado
       if (user.emailVerified) {
-        console.log(`⚠️ Email verification skipped: User ${email} already verified`);
-        return;
+        console.log(`⚠️ Email ${email} is already verified`);
+        return { 
+          email, 
+          sent: false 
+        };
       }
 
-      // Create verification token
-      console.log(`🔍 Creating email verification token for user ID: ${user.id}`);
-      const token = randomUUID();
-      const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+      // Eliminar tokens anteriores para este usuario
+      await this.prisma.emailVerificationToken.deleteMany({
+        where: { userId: user.id }
+      });
+      console.log(`🗑️ Deleted previous verification tokens for user ${user.id}`);
 
+      // Generar nuevo token
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // Token válido por 24 horas
+
+      // Guardar token
       await this.prisma.emailVerificationToken.create({
         data: {
-          userId: user.id,
           token,
+          userId: user.id,
           expiresAt,
         },
       });
-      console.log(`✅ Verification token created: ${token.substring(0, 8)}... (expires ${expiresAt})`);
 
-      // Queue email job
-      console.log(`🔍 Adding verification email to queue for: ${email}`);
-      const job = await this.emailQueue.add('sendEmailVerificationEmail', { email, token });
-      console.log(`✅ Email job queued successfully with ID: ${job.id}`);
+      // Construir URL de verificación
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const verificationUrl = `${frontendUrl}/verify-email/${token}`;
+
+      console.log(`🔗 Verification URL: ${verificationUrl}`);
+
+      // Añadir a la cola de email
+      await this.emailQueue.add('verification-email', {
+        to: email,
+        name: user.name || 'Usuario',
+        verificationUrl,
+      });
+
+      console.log(`✅ Verification email queued for ${email}`);
+      
+      return { 
+        email, 
+        sent: true 
+      };
     } catch (error) {
-      console.error(`❌ Error sending verification email for ${email}:`, error instanceof Error ? error.message : error);
+      console.error(`❌ Error sending verification email:`, error instanceof Error ? error.message : error);
       throw error;
     }
   }
 
-  async verifyEmail(token: string): Promise<void> {
+  /**
+   * Verifica el email de un usuario utilizando el token enviado por correo
+   * @param token Token de verificación único
+   * @returns Información del usuario verificado
+   * @throws UnauthorizedException si el token es inválido o ha expirado
+   * @throws BadRequestException si el email ya fue verificado previamente
+   */
+  async verifyEmail(token: string): Promise<{email: string; verified: boolean}> {
     console.log(`🔍 Verifying email with token: ${token.substring(0, 8)}...`);
 
     try {
-      // Find token
+      // Validar que el token exista
       console.log(`🔍 Searching for verification token in database...`);
       const verificationToken = await this.prisma.emailVerificationToken.findUnique({
         where: { token },
@@ -222,44 +278,79 @@ export class AuthService {
 
       if (!verificationToken) {
         console.log(`❌ Verification failed: Token not found in database`);
-        throw new UnauthorizedException('Token de verificación inválido o expirado.');
+        throw new UnauthorizedException({
+          message: 'Token de verificación inválido o expirado.',
+          code: 'INVALID_TOKEN'
+        });
       }
       console.log(`✅ Token found, user ID: ${verificationToken.userId}, expires: ${verificationToken.expiresAt}`);
 
-      // Check token expiration
+      // Validar que el token no haya expirado
       if (new Date() > verificationToken.expiresAt) {
         console.log(`❌ Verification failed: Token expired at ${verificationToken.expiresAt}`);
+        // Eliminar token expirado por seguridad
         await this.prisma.emailVerificationToken.delete({ where: { token } });
-        throw new UnauthorizedException('Token de verificación expirado. Solicita uno nuevo.');
+        throw new UnauthorizedException({
+          message: 'Token de verificación expirado. Solicita uno nuevo.',
+          code: 'TOKEN_EXPIRED'
+        });
       }
 
-      // Find user
+      // Buscar al usuario asociado al token
       console.log(`🔍 Finding user with ID: ${verificationToken.userId}`);
-      const user = await this.prisma.user.findUnique({ where: { id: verificationToken.userId } });
+      const user = await this.prisma.user.findUnique({ 
+        where: { id: verificationToken.userId } 
+      });
+      
       if (!user) {
         console.log(`❌ Verification failed: User not found for token`);
         await this.prisma.emailVerificationToken.delete({ where: { token } });
-        throw new UnauthorizedException('Usuario no encontrado.');
+        throw new UnauthorizedException({
+          message: 'Usuario no encontrado.',
+          code: 'USER_NOT_FOUND'
+        });
       }
       console.log(`✅ User found: ${user.email}`);
 
-      // Check if already verified
+      // Verificar si el email ya estaba verificado
       if (user.emailVerified) {
         console.log(`⚠️ Email already verified for user: ${user.email}`);
+        // Eliminar token redundante
         await this.prisma.emailVerificationToken.delete({ where: { token } });
-        throw new BadRequestException('El email ya fue verificado previamente.');
+        throw new BadRequestException({
+          message: 'El email ya fue verificado previamente.',
+          code: 'ALREADY_VERIFIED'
+        });
       }
 
-      // Update user and delete token
+      // Actualizar usuario y eliminar token en una transacción
       console.log(`🔍 Updating user ${user.email} to verified status...`);
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerified: true },
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Marcar email como verificado
+        const updatedUser = await tx.user.update({
+          where: { id: user.id },
+          data: { emailVerified: true },
+        });
+        
+        // Eliminar token usado
+        await tx.emailVerificationToken.delete({ where: { token } });
+        
+        // Eliminar cualquier otro token de verificación para este usuario
+        await tx.emailVerificationToken.deleteMany({
+          where: { userId: user.id }
+        });
+        
+        return updatedUser;
       });
+      
       console.log(`✅ User ${user.email} verified successfully`);
-
-      await this.prisma.emailVerificationToken.delete({ where: { token } });
-      console.log(`✅ Verification token deleted from database`);
+      console.log(`✅ All verification tokens for user deleted from database`);
+      
+      // Retornar información útil para el frontend
+      return {
+        email: result.email,
+        verified: result.emailVerified
+      };
     } catch (error) {
       console.error(`❌ Email verification error:`, error instanceof Error ? error.message : error);
       throw error;
