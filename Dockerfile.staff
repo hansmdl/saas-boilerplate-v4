@@ -9,7 +9,7 @@ COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./
 COPY ./apps/staff/package.json ./apps/staff/
 COPY ./packages/ui/package.json ./packages/ui/
 COPY ./packages/config/package.json ./packages/config/
-RUN npm install -g pnpm@10 && pnpm install --frozen-lockfile
+RUN npm install -g pnpm@10 && pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
 WORKDIR /app/apps/staff
 RUN pnpm build

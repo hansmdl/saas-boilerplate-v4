@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { OrganizationModule } from './organization/organization.module';
+import { RolesModule } from './roles/roles.module';
+import { StaffModule } from './staff/staff.module';
 import { EmailModule, PasswordResetModule } from 'email';
 
 
@@ -16,6 +18,8 @@ import { EmailModule, PasswordResetModule } from 'email';
     }),
     AuthModule,
     OrganizationModule,
+    RolesModule,
+    StaffModule,
     EmailModule,
     PasswordResetModule,
   ],

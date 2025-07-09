@@ -114,6 +114,39 @@ async function main() {
     },
   });
 
+  // Seed Permissions & RolePermissions
+  const permissions = [
+    { scope: 'user:read', description: 'Leer usuarios' },
+    { scope: 'user:update', description: 'Actualizar usuarios' },
+    { scope: 'org:manage', description: 'Administrar organización' },
+  ];
+
+  await prisma.permission.createMany({ data: permissions, skipDuplicates: true });
+
+  // Map roles a permisos (simplificado)
+  const rolePermMap: Record<string, string[]> = {
+    ADMIN: ['user:read', 'user:update', 'org:manage'],
+    USER: ['user:read'],
+  };
+
+  // Crear RolePermissions evitando problemas con nombres de índices compuestos
+  const rolePermissionsData: { role: any; permissionId: string }[] = [];
+  for (const [role, scopes] of Object.entries(rolePermMap)) {
+    for (const scope of scopes) {
+      const perm = await prisma.permission.findUnique({ where: { scope } });
+      if (perm) {
+        rolePermissionsData.push({ role: role as any, permissionId: perm.id });
+
+
+      }
+    }
+  }
+
+  // Insertar datos y omitir duplicados
+  if (rolePermissionsData.length) {
+    await prisma.rolePermission.createMany({ data: rolePermissionsData, skipDuplicates: true });
+  }
+
   console.log("Seeding finished.");
 }
 

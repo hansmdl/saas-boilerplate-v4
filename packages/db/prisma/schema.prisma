@@ -233,3 +233,24 @@ model Subscription {
   customerId String   @unique
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
+
+// ──────────────────────────────────────────────────────────────
+// PERMISSIONS (RBAC)
+// ──────────────────────────────────────────────────────────────
+
+model Permission {
+  id          String   @id @default(uuid())
+  scope       String   @unique
+  description String?
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  role         Role
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+}
