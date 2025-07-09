@@ -9,7 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MagicLinkService } from './magic-link.service';
 import { GoogleStrategy } from './strategies/google.strategy';
-import { GitHubStrategy } from './strategies/github.strategy';
+
 import { LocalStrategy } from './strategies/local.strategy';
 
 @Module({
@@ -39,7 +39,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     PrismaService,
     JwtStrategy,
     GoogleStrategy,
-    GitHubStrategy,
+
     LocalStrategy,
   ],
 })

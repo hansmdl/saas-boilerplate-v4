@@ -96,9 +96,11 @@ export class AuthController {
       // Handle Google OAuth callback
       const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
       this.setCookies(res, accessToken, refreshToken);
-      
-      // Determinar la URL de redirección
-      const redirectUrl = this.getRedirectUrl(state);
+
+      // Determinar la URL base de redirección
+      const baseRedirectUrl = this.getRedirectUrl(state);
+      // Agregar los tokens como query params
+      const redirectUrl = `${baseRedirectUrl.replace(/\/?$/, '')}/auth/callback?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`;
       console.log(`🔄 Redirigiendo después de login con Google a: ${redirectUrl}`);
       res.redirect(redirectUrl);
     } catch (error) {
@@ -107,29 +109,6 @@ export class AuthController {
     }
   }
 
-  @Get('github')
-  @UseGuards(AuthGuard('github'))
-  async githubAuth() {
-    // Initiates the GitHub OAuth flow
-  }
-
-  @Get('github/callback')
-  @UseGuards(AuthGuard('github'))
-  async githubAuthRedirect(@Request() req, @Res() res: Response, @Query('state') state?: string) {
-    try {
-      // Handle GitHub OAuth callback
-      const { accessToken, refreshToken } = await this.authService.socialLogin(req.user);
-      this.setCookies(res, accessToken, refreshToken);
-      
-      // Determinar la URL de redirección
-      const redirectUrl = this.getRedirectUrl(state);
-      console.log(`🔄 Redirigiendo después de login con GitHub a: ${redirectUrl}`);
-      res.redirect(redirectUrl);
-    } catch (error) {
-      console.error('❌ Error en GitHub OAuth callback:', error instanceof Error ? error.message : error);
-      res.redirect(`/login?error=${encodeURIComponent('Error durante la autenticación con GitHub')}`);
-    }
-  }
 
   /**
    * Establece las cookies de autenticación en la respuesta
