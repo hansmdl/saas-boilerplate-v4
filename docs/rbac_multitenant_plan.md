@@ -19,9 +19,9 @@ Todas las tareas respetan la arquitectura Turborepo, el esquema Prisma existente
 - [x] Seeder con roles (`admin`, `staff`, `owner`, `member`) y scopes (`user:read`, `user:update`, `org:manage`, …).
 
 ### 2. Backend (apps/api)
-- [ ] Decorador `@Scopes()` y `ScopesGuard` (NestJS).
-- [ ] Servicio `RolesService` con métodos `getUserScopes`, `assignRole` con cache Redis.
-- [ ] Endpoints Staff `PATCH /staff/users/:id/roles` (protegido por scope `user:update`).
+- [x] Decorador `@Scopes()` y `ScopesGuard` (NestJS).
+- [x] Servicio `RolesService` con métodos `getUserScopes`, `assignRole` (cache Redis pendiente).
+- [x] Endpoints Staff `PATCH /staff/users/:id/roles` (protegido por scope `user:update`).
 
 ### 3. Frontend (apps/web & apps/staff)
 - [ ] Hook `useHasScope(scope)` que consume scopes desde `/auth/me`.
@@ -63,7 +63,7 @@ Todas las tareas respetan la arquitectura Turborepo, el esquema Prisma existente
 ## Checklist Global de Avance
 - [x] Fase 0 completa
 - [x] Fase 1 – DB
-- [ ] Fase 1 – Backend
+- [x] Fase 1 – Backend
 - [ ] Fase 1 – Frontend
 - [ ] Fase 1 – Tests
 - [ ] Fase 2 – DB

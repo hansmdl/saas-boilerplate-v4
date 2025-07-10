@@ -10,20 +10,22 @@ import {
   UsePipes,
   Query,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { MagicLinkService } from './magic-link.service';
 import { MagicLinkRequestDto, magicLinkRequestSchema } from './dto/magic-link.dto';
 import { ZodValidationPipe } from '../pipes/zod.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { registerSchema, type RegisterDto } from './dto/register.dto';
-import { loginSchema } from './dto/login.dto';
-import { forgotPasswordSchema, type ForgotPasswordDto } from './dto/forgot-password.dto';
-import { resetPasswordSchema, type ResetPasswordDto } from './dto/reset-password.dto';
+import { registerSchema, RegisterDto } from './dto/register.dto';
+import { loginSchema, LoginDto } from './dto/login.dto';
+import { forgotPasswordSchema, ForgotPasswordDto } from './dto/forgot-password.dto';
+import { resetPasswordSchema, ResetPasswordDto } from './dto/reset-password.dto';
 import { CurrentUser } from './decorators/user.decorator';
 import type { User } from 'db';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -32,6 +34,7 @@ export class AuthController {
   ) {}
 
   @Post('magic-link-request')
+  @ApiBody({ type: MagicLinkRequestDto })
   @UsePipes(new ZodValidationPipe(magicLinkRequestSchema))
   async requestMagicLink(@Body() dto: MagicLinkRequestDto) {
     // Usa FRONTEND_URL para armar el link
@@ -57,6 +60,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @ApiBody({ type: RegisterDto })
   @UsePipes(new ZodValidationPipe(registerSchema))
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -64,6 +68,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
+  @ApiBody({ type: LoginDto })
   @UsePipes(new ZodValidationPipe(loginSchema))
   async login(
     @Request() req: { user: Omit<User, 'password'> },
@@ -170,6 +175,7 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @ApiBody({ type: ForgotPasswordDto })
   @UsePipes(new ZodValidationPipe(forgotPasswordSchema))
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     await this.authService.forgotPassword(forgotPasswordDto);
@@ -248,6 +254,7 @@ export class AuthController {
   }
 
   @Post('reset-password')
+  @ApiBody({ type: ResetPasswordDto })
   @UsePipes(new ZodValidationPipe(resetPasswordSchema))
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     await this.authService.resetPassword(resetPasswordDto);
