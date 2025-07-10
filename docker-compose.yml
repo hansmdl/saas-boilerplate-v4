@@ -27,12 +27,15 @@ services:
 
   kong:
     image: kong:3.6
+    volumes:
+      - ./infra/kong/kong.yaml:/home/kong/kong.yaml
     container_name: kong
     restart: unless-stopped
     environment:
       KONG_DATABASE: postgres
       KONG_PG_HOST: kong-db
       KONG_PG_PASSWORD: kong
+      KONG_PASSWORD: kong
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
@@ -114,6 +117,18 @@ services:
       - api
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3002
+
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    container_name: bp-db
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://boilerplate:2356@postgres:5432/saas-boilerplate
+    working_dir: /app/packages/db
+    command: ["sleep", "infinity"]
 
 volumes:
   postgres_data:

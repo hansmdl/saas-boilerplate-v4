@@ -241,10 +241,10 @@ export class AuthService {
       console.log(`🔗 Verification URL: ${verificationUrl}`);
 
       // Añadir a la cola de email
-      await this.emailQueue.add('verification-email', {
-        to: email,
-        name: user.name || 'Usuario',
-        verificationUrl,
+      await this.emailQueue.add('sendEmailVerificationEmail', {
+        email,
+        token,
+        expiresAt,
       });
 
       console.log(`✅ Verification email queued for ${email}`);

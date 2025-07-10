@@ -11,10 +11,13 @@ import { MagicLinkService } from './magic-link.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 
 import { LocalStrategy } from './strategies/local.strategy';
+import { AuthGateway } from './auth.gateway';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
   imports: [
     EmailModule,
+    RolesModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
@@ -41,6 +44,7 @@ import { LocalStrategy } from './strategies/local.strategy';
     GoogleStrategy,
 
     LocalStrategy,
+    AuthGateway,
   ],
 })
 export class AuthModule {}

@@ -1,6 +1,7 @@
 _format_version: "3.0"
 
 services:
+  # Servicio principal para rutas HTTP REST
   - name: api-saas
     url: http://bp-api:3002
     routes:
@@ -9,6 +10,32 @@ services:
           - /api
         strip_path: true
         preserve_host: false
+
+  # Servicio dedicado a WebSockets de autenticación
+  - name: ws-auth
+    url: http://bp-api:3002
+    routes:
+      - name: ws-auth-route
+        paths:
+          - /ws/auth
+        protocols:
+          - http
+          - https
+
+        strip_path: false
+        preserve_host: false
+      # Ruta adicional para el handshake de Socket.IO
+      - name: socketio-route
+        paths:
+          - /socket.io/
+        protocols:
+          - http
+          - https
+
+        strip_path: false
+        preserve_host: false
+
+  # Fin servicio ws-auth
       
   - name: api-auth
     url: http://bp-api:3002/auth
