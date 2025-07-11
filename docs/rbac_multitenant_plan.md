@@ -24,8 +24,8 @@ Todas las tareas respetan la arquitectura Turborepo, el esquema Prisma existente
 - [x] Endpoints Staff `PATCH /staff/users/:id/roles` (protegido por scope `user:update`).
 
 ### 3. Frontend (apps/web & apps/staff)
-- [ ] Hook `useHasScope(scope)` que consume scopes desde `/auth/me`.
-- [ ] UI en panel Staff para asignación de roles (tabla usuarios + combobox).
+- [x] Hook `useHasScope(scope)` (WebSocket)
+- [x] UI en panel Staff para asignación de roles (tabla usuarios + combobox vía WebSocket).
 
 ### 4. Tests
 - [ ] Unit tests para `ScopesGuard`.
