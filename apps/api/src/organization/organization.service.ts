@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService, User, OrganizationRole } from 'db';
+import { PrismaService, User, CustomerRole } from 'db';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class OrganizationService {
         data: {
           organizationId: organization.id,
           userId: user.id,
-          role: OrganizationRole.OWNER,
+          role: CustomerRole.OWNER,
         },
       });
 

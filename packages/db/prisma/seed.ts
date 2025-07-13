@@ -1,7 +1,8 @@
 import {
   PrismaClient,
-  UserType,
-  OrganizationRole,
+  AccountType,
+  PlatformRole,
+  CustomerRole,
   SubscriptionPlan,
   SubscriptionStatus,
 } from "../src/generated/prisma";
@@ -20,7 +21,8 @@ async function main() {
       password: password,
       name: "Super Admin",
       emailVerified: true,
-      userType: UserType.SUPER_ADMIN,
+      accountType: AccountType.PLATFORM_STAFF,
+      platformRole: PlatformRole.SUPER_ADMIN,
     },
   });
 
@@ -31,7 +33,8 @@ async function main() {
       password: password,
       name: "Platform Admin",
       emailVerified: true,
-      userType: UserType.PLATFORM_ADMIN,
+      accountType: AccountType.PLATFORM_STAFF,
+      platformRole: PlatformRole.SUPPORT_AGENT,
     },
   });
 
@@ -42,7 +45,7 @@ async function main() {
       password: password,
       name: "Regular User",
       emailVerified: true,
-      userType: UserType.REGULAR,
+      accountType: AccountType.CUSTOMER_USER,
     },
   });
 
@@ -63,7 +66,7 @@ async function main() {
     data: {
       organizationId: organization.id,
       userId: regularUser.id,
-      role: OrganizationRole.OWNER,
+      role: CustomerRole.OWNER,
     },
   });
 
@@ -71,7 +74,7 @@ async function main() {
     data: {
       organizationId: organization.id,
       userId: platformAdmin.id,
-      role: OrganizationRole.ADMIN,
+      role: CustomerRole.ADMIN,
     },
   });
 
@@ -80,7 +83,7 @@ async function main() {
     data: {
       email: "newuser@example.com",
       organizationId: organization.id,
-      role: OrganizationRole.MEMBER,
+      role: CustomerRole.MEMBER,
       token: "invitation-token",
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
     },
