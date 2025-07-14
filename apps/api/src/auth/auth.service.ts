@@ -63,7 +63,26 @@ export class AuthService {
   }
 
   async login(user: Omit<User, 'password'>) {
-    const payload = { email: user.email, sub: user.id };
+    // Fetch scopes linked to user roles
+    const rolePermissions = await this.prisma.rolePermission.findMany({
+      where: {
+        role: {
+          in: user.roles,
+        },
+      },
+      include: {
+        permission: true,
+      },
+    });
+    const scopes = rolePermissions.map((rp) => rp.permission.scope);
+
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      roles: user.roles,
+      platformRole: user.platformRole,
+      scopes,
+    };
     
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET,
@@ -71,7 +90,7 @@ export class AuthService {
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
+      secret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_REFRESH_SECRET,
       expiresIn: '7d',
     });
 
@@ -396,7 +415,7 @@ export class AuthService {
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET, // Corregido: usar refresh secret
+      secret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_REFRESH_SECRET, // Corregido: usar refresh secret
       expiresIn: '7d',
     });
 

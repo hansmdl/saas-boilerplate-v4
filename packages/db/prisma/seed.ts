@@ -5,6 +5,7 @@ import {
   CustomerRole,
   SubscriptionPlan,
   SubscriptionStatus,
+  Role,
 } from "../src/generated/prisma";
 import * as bcrypt from "bcrypt";
 
@@ -23,6 +24,7 @@ async function main() {
       emailVerified: true,
       accountType: AccountType.PLATFORM_STAFF,
       platformRole: PlatformRole.SUPER_ADMIN,
+      roles: { set: [Role.ADMIN] }, // Grant full permissions
     },
   });
 
@@ -35,6 +37,7 @@ async function main() {
       emailVerified: true,
       accountType: AccountType.PLATFORM_STAFF,
       platformRole: PlatformRole.SUPPORT_AGENT,
+      roles: { set: [Role.ADMIN] },
     },
   });
 

@@ -20,7 +20,9 @@ function getSocket(): Socket {
       } catch {}
     }
 
-    socket = io('/', {
+    const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || '/';
+
+    socket = io(`${SOCKET_URL}/ws/auth`, {
       path: '/socket.io',
       transports: ['websocket'],
       autoConnect: true,
@@ -38,7 +40,27 @@ function getSocket(): Socket {
  * Usage: const canEdit = useHasScope('user:update');
  */
 export function useHasScope(scope: string): boolean {
-  const [scopes, setScopes] = useState<string[]>([]);
+  // Attempt to derive initial scopes from JWT in case WebSocket is unavailable
+  const deriveInitialScopes = (): string[] => {
+    if (typeof window === 'undefined') return [];
+    const tok = localStorage.getItem('access_token');
+    if (!tok) return [];
+    try {
+      const payload = JSON.parse(atob(tok.split('.')[1]));
+      if (Array.isArray(payload.scopes)) {
+        return payload.scopes as string[];
+      }
+      // Grant all scopes for SUPER_ADMIN in client-side fallback
+      if (payload.platformRole === 'SUPER_ADMIN' || payload.roles?.includes('SUPER_ADMIN')) {
+        return ['*'];
+      }
+    } catch (err) {
+      // ignore parse errors
+    }
+    return [];
+  };
+
+  const [scopes, setScopes] = useState<string[]>(deriveInitialScopes());
 
   useEffect(() => {
     const s = getSocket();
@@ -57,5 +79,5 @@ export function useHasScope(scope: string): boolean {
     };
   }, []);
 
-  return scopes.includes(scope);
+  return scopes.includes('*') || scopes.includes(scope);
 }
